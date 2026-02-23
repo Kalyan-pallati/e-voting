@@ -32,9 +32,9 @@ This hybrid approach ensures:
 
 ---
 
-## 🏗 Architecture Overview
+##  Architecture Overview
 
-### 🔐 Backend (FastAPI + MongoDB)
+###  Backend (FastAPI + MongoDB)
 
 **Responsible for:**
 - User authentication (JWT)
@@ -66,7 +66,7 @@ Only vote logic lives on-chain.
 
 ---
 
-### 💻 Frontend (React + Vite + Tailwind)
+### Frontend (React + Vite + Tailwind)
 
 Provides:
 - Login / Registration
@@ -77,7 +77,7 @@ Provides:
 - Wallet integration (via MetaMask)
 ---
 
-## 🧩 Tech Stack
+##  Tech Stack
 
 ### Backend
 - FastAPI
@@ -260,7 +260,7 @@ To vote on your local machine, you need to connect MetaMask to your Ganache bloc
 As this is a local blockchain, you only get access to some of the private keys. Remember that only the Account 0 private key wallet can be used to do any of the admin operations (Creating, editing or deleting elections). While the other private keys can be used for user operations(voting, checking what elections are live). If any other wallet is used with the admin account, it throws an error. So make sure to use the wallet with the Account 0 private address). 
 
 ---
-## ✨ Key Features
+##  Key Features
 
 ### Admin Dashboard (Election Management)
 * **Global Candidate List:** Admins can create a master list of politicians (Name, Party) stored in the database, which can be reused across multiple different elections.
