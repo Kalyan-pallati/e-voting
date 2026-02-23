@@ -36,7 +36,7 @@ This hybrid approach ensures:
 
 ### 🔐 Backend (FastAPI + MongoDB)
 
-Responsible for:
+**Responsible for:**
 - User authentication (JWT)
 - Role management (Admin / Voter)
 - Election metadata
@@ -75,7 +75,6 @@ Provides:
 - Candidate Management UI
 - Voter Election View
 - Wallet integration (via MetaMask)
-
 ---
 
 ## 🧩 Tech Stack
@@ -109,8 +108,8 @@ Existing blockchain voting system use a traditional method of storing the electi
 2. Blockchain returns an `electionId`.
 3. Backend stores metadata in MongoDB with that `blockchainId`.
 
-MongoDB → Stores human-readable data  
-Blockchain → Stores integrity logic
+**MongoDB** → Stores human-readable data  
+**Blockchain** → Stores integrity logic
 
 ---
 
@@ -160,34 +159,115 @@ JWT_SECRET="your_super_secret_key"
 ---
 ## Setup Instructions
 
+### Blockchain & Ganache (Run this first)
+You must have your local blockchain running in the background before deploying contracts or starting the frontend
+
+1. **Start Ganache:**
+- Open the Ganache Desktop and click on "Quick Start"
+- Leave the application running in the background (Note: Make sure that hardhat.config.js(in the blockchain folder) network section points to the same port on the Ganache GUI. By default, it runs on the port 7545). Ensure that the file looks something like this.
+```bash
+#blockchain/hardhat.config.js
+url: "http://127.0.0.1:7545",
+chainId: 1337
+```
+2. **Open a terminal and navigate to the blockchain folder:**
+```bash
+cd blockchain
+```
+3. **Install all the necessary packages**
+```bash
+npm install
+```
+4. **Deploy the smart contract to your running Ganache network in the background:**
+```bash
+npx hardhat ignition deploy ./igniyion/modules/Voting.js --network localhost
+```
+
+5. **Copy the file:**
+**(Do not skip this step)**
+Once deployment is completed, copy the generated Contract address from the terminal and paste it into your frontend configuration file (frontend/src/constants.js). Replace `YOUR_CONTRACT_ADDRESS` with your actual contract address.
+```bash
+export const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS"
+```
+6. **Update ABI :**
+Copy the updated VotingSystem.json file from your blockchain artifacts folder(/blockchain/artifacts/contracts/VotingSystem.json) to your frontend artifacts folder(/frontend/src/artifacts) so the frontend(React) knows how to talk to the contract.
+
 ### Backend
-1. Redirect to the backend folder
+1. **Navigate to the backend folder**
 ```bash
 cd backend 
 ```
-2. Setup and activate a virtual environment
+2. **Setup and activate a virtual environment**
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
-3. Install all the required dependencies
+3. **Install all the required dependencies**
 ```bash
 pip install -r requirements.txt
 ```
-4. Run the Application(Backend)
+4. **Run the Application(Backend)**
 ```bash
 uvicorn app.main:app --reload
 ```
+5. **Create an Initial Admin Account Manually**    
+While the normal user can create his account through the User Interface, the admin account cannot be created through a web interface because of security concerns. So you must create your first Admin account using the API, not by manually editing the database. FastAPI makes this easy with its built-in interactive docs.
+
+- Ensure the FastAPI backend is running.
+-  Open your browser and go to: http://127.0.0.1:8000/docs
+-  Find the POST /register endpoint and click on it.
+-  Click the "Try it out" button.
+-  In the Request Body, enter your admin details. Make sure the role is exactly "admin". Example request should be sent like this:
+```bash
+{
+  "email": "admin@college.edu",
+  "password": "securepassword123",
+  "role": "admin"
+}
+```
+6. **Click Execute. You should see a 201 Successful Response.**
 ### Frontend
-1. Open another terminal and redirect to the frontend folder 
+1. **Open another terminal and navigate to the frontend folder**
 ```bash
 cd frontend
 ```
-2. Install all the packages 
+2. **Install all the packages** 
 ```bash
 cd frontend
 ```
-3. Run the frontend
+3. **Run the frontend**
 ```bash
 npm run dev
 ```
+--- 
+## Metamask Local Setup (For Testing)
+To vote on your local machine, you need to connect MetaMask to your Ganache blockchain.
+
+1. **Open MetaMask** -> Click the network dropdown (top left) -> Add Network -> Add a network manually.
+
+2. **Enter the details:**
+- **Network Name:** Ganache Local
+- **New RPC URL:** http://127.0.0.1:7545 (or 8545 if using CLI)
+- **Chain ID:** 1337
+- **Currency Symbol:** ETH
+
+3. Click Save and switch to this network.
+
+4. **Get Test ETH:** Open your Ganache UI, click the "Key" icon next to the first account (Account 0), and copy the Private Key. In **MetaMask**, click your profile circle -> Import Account -> Paste the private key.
+5. You can create as many wallets as you want with different private keys.
+
+**IMPORTANT POINT**:   
+As this is a local blockchain, you only get access to some of the private keys. Remember that only the Account 0 private key wallet can be used to do any of the admin operations (Creating, editing or deleting elections). While the other private keys can be used for user operations(voting, checking what elections are live). If any other wallet is used with the admin account, it throws an error. So make sure to use the wallet with the Account 0 private address). 
+
+---
+## ✨ Key Features
+
+### Admin Dashboard (Election Management)
+* **Global Candidate List:** Admins can create a master list of politicians (Name, Party) stored in the database, which can be reused across multiple different elections.
+* **Ballot Locking:** Once an election goes "Live," the system locks the ballot, preventing admins from adding, removing, or modifying candidates.
+* **Live Result Auditing:** A dedicated results page fetches the immutable vote tally directly from the smart contract, complete with percentages, progress bars, and winner highlights.
+
+### Voter Experience
+* **Secure Web2 Authentication:** Voters register and log in using standard Email/Password (secured via hashed passwords and JWT tokens).
+* **Web3 Wallet Integration:** Voters connect their MetaMask wallet with a single click to interact with the blockchain.
+* **Active Election Feed:** Voters only see elections that are currently active and available for voting.
