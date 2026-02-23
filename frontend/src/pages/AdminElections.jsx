@@ -72,7 +72,6 @@ export default function AdminElections() {
     return e.status === filter;
   });
 
-  /* -------------------- CREATE -------------------- */
 
   const createElection = async () => {
     if (!title || !startTime || !endTime) return alert("Fill all fields");
@@ -92,13 +91,11 @@ export default function AdminElections() {
 
       console.log("Creating election ON-CHAIN...");
 
-      // Only send time (Contract doesn't need Title)
       const tx = await contract.createElection(startSeconds, endSeconds);
 
       setTxStatus("mining");
       const receipt = await tx.wait();
 
-      // Get the ID from the event log
       const event = receipt.logs.find(
         (l) => l.fragment?.name === "ElectionCreated"
       );
@@ -109,7 +106,6 @@ export default function AdminElections() {
 
       console.log("Election created:", blockchainId);
 
-      // DB write
       const res = await fetch("http://localhost:8000/elections", {
         method: "POST",
         headers: {
@@ -117,7 +113,7 @@ export default function AdminElections() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          title, // Saved to DB
+          title, 
           description,
           start_time: startSeconds,
           end_time: endSeconds,
@@ -139,12 +135,11 @@ export default function AdminElections() {
       }, 1200);
     } catch (err) {
       console.error(err);
-      alert("Transaction failed: " + (err.reason || err.message));
+      ("Transaction failed: " + (err.reason || err.message));
       setTxStatus("idle");
     }
   };
 
-  /* -------------------- UI -------------------- */
 
   if (loading) {
     return (
@@ -162,7 +157,6 @@ export default function AdminElections() {
     <div className="min-h-screen bg-gray-50/50 p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
@@ -181,7 +175,6 @@ export default function AdminElections() {
           </button>
         </div>
 
-        {/* Status Filter Tabs */}
         <div className="flex p-1 bg-white rounded-xl border border-gray-200 w-fit shadow-sm">
           {[
             { id: "all", label: "All Elections" },
@@ -203,7 +196,6 @@ export default function AdminElections() {
           ))}
         </div>
 
-        {/* Elections Table */}
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xl shadow-gray-200/40">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/50 border-b border-gray-100">
@@ -257,7 +249,6 @@ export default function AdminElections() {
                   </td>
                   <td className="p-5 text-right">
                     <div className="flex items-center justify-end gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                      {/* Candidates Button */}
                       <button
                         onClick={() =>
                           navigate("/admin/candidates", {
@@ -269,7 +260,6 @@ export default function AdminElections() {
                         Candidates
                       </button>
 
-                      {/* Results Button */}
                       <button
                         onClick={() => navigate(`/results/${e.id}`)}
                         className="text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
@@ -308,7 +298,6 @@ export default function AdminElections() {
           </table>
         </div>
 
-        {/* Create Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl p-8 w-full max-w-lg shadow-2xl border border-gray-100 transform transition-all scale-100">

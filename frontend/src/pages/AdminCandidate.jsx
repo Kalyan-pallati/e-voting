@@ -1,8 +1,10 @@
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { BlockchainContext } from "../context/BlockChainContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function AdminCandidates() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
@@ -15,14 +17,11 @@ export default function AdminCandidates() {
   const [globalPoliticians, setGlobalPoliticians] = useState([]);
   const [linkedCandidates, setLinkedCandidates] = useState([]);
 
-  // Form States
-  const [addMode, setAddMode] = useState("existing"); // 'existing' | 'new'
+  const [addMode, setAddMode] = useState("existing"); 
   const [selectedPoliticianId, setSelectedPoliticianId] = useState("");
   const [newName, setNewName] = useState("");
   const [newParty, setNewParty] = useState("");
   const [loading, setLoading] = useState(false);
-
-  /* ---------------- INIT ---------------- */
 
   useEffect(() => {
     if (!token) {
@@ -34,7 +33,6 @@ export default function AdminCandidates() {
     if (preSelectedElection) fetchLinkedCandidates(preSelectedElection);
   }, []);
 
-  /* ---------------- FETCHERS ---------------- */
 
   const fetchElections = async () => {
     const res = await fetch("http://localhost:8000/admin/elections", {
@@ -59,7 +57,6 @@ export default function AdminCandidates() {
     setLinkedCandidates(res.ok ? await res.json() : []);
   };
 
-  /* ---------------- HELPERS ---------------- */
 
   const getElectionStatus = (e) => {
     if (!e) return "draft";
@@ -69,9 +66,7 @@ export default function AdminCandidates() {
     return "active";
   };
 
-  /* ---------------- ACTIONS ---------------- */
 
-  // Core Logic: Add a politician (object) to the current selected election
   const executeBlockchainAdd = async (politician) => {
     if (!contract) throw new Error("Connect wallet first");
     if (!selectedElection) throw new Error("No election selected");
@@ -80,11 +75,9 @@ export default function AdminCandidates() {
       `Adding ${politician.name} to Election #${selectedElection.blockchain_id}...`
     );
 
-    // 1️⃣ Blockchain Write
     const tx = await contract.addCandidate(selectedElection.blockchain_id);
     const receipt = await tx.wait();
 
-    // 2️⃣ Read Event
     const event = receipt.logs.find(
       (l) => l.fragment?.name === "CandidateAdded"
     );
@@ -92,7 +85,6 @@ export default function AdminCandidates() {
 
     const newCandidateId = Number(event.args[1]);
 
-    // 3️⃣ Backend Sync
     const res = await fetch(
       `http://localhost:8000/elections/${selectedElection.id}/candidates`,
       {
@@ -113,9 +105,8 @@ export default function AdminCandidates() {
     return newCandidateId;
   };
 
-  // HANDLER: Add from Existing Dropdown
   const handleAddExisting = async () => {
-    if (!selectedPoliticianId) return alert("Select a politician");
+    if (!selectedPoliticianId) return showToast("Select a politician");
     const politician = globalPoliticians.find(
       (p) => p.id === selectedPoliticianId
     );
@@ -124,25 +115,23 @@ export default function AdminCandidates() {
     setLoading(true);
     try {
       await executeBlockchainAdd(politician);
-      alert(`${politician.name} added successfully!`);
+      showToast(`${politician.name} added successfully!`);
       setSelectedPoliticianId("");
       fetchLinkedCandidates(selectedElection);
     } catch (err) {
       console.error(err);
-      alert("Error: " + (err.reason || err.message));
+      showToast("Error: " + (err.reason || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  // HANDLER: Create New & Add Immediately
   const handleCreateAndAdd = async () => {
     if (!newName.trim() || !newParty.trim())
       return alert("Enter name and party");
 
     setLoading(true);
     try {
-      // 1. Create in Global Bank first
       const createRes = await fetch("http://localhost:8000/admin/politicians", {
         method: "POST",
         headers: {
@@ -155,11 +144,10 @@ export default function AdminCandidates() {
       if (!createRes.ok) throw new Error("Failed to create global politician");
       const { id } = await createRes.json();
 
-      // 2. Refresh bank and get the full object
-      await fetchGlobalPoliticians(); // Update local list
+      await fetchGlobalPoliticians(); 
       const newPolitician = { id, name: newName, party: newParty };
 
-      // 3. Add to Election
+
       await executeBlockchainAdd(newPolitician);
 
       alert(`${newName} created and added to ballot!`);
@@ -174,7 +162,6 @@ export default function AdminCandidates() {
     }
   };
 
-  /* ---------------- UI ---------------- */
 
   const currentStatus = getElectionStatus(selectedElection);
   const isEditable = currentStatus === "draft";
@@ -182,7 +169,7 @@ export default function AdminCandidates() {
   return (
     <div className="min-h-screen bg-gray-50/50 p-6 font-sans">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Sidebar: Election List */}
+
         <div className="lg:col-span-4 space-y-4">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xl font-bold text-gray-800">Select Election</h2>
@@ -233,7 +220,6 @@ export default function AdminCandidates() {
           </div>
         </div>
 
-        {/* Right Content: Details & Management */}
         <div className="lg:col-span-8 space-y-6">
           {selectedElection ? (
             <>
@@ -265,7 +251,6 @@ export default function AdminCandidates() {
                 </div>
               </div>
 
-              {/* Add Candidate Section (Only visible if Draft) */}
               {isEditable ? (
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-lg shadow-gray-200/50 overflow-hidden">
                   <div className="bg-gray-50/50 p-2 flex gap-2 border-b border-gray-100">
